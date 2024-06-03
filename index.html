@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de la Distancia entre Dos Puntos</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cálculo de la Distancia entre Dos Puntos</h1>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <p id="resultado">Haz clic en dos puntos del plano o ingresa las coordenadas manualmente.</p>
+    
+    <div>
+        <label for="x1">X1:</label>
+        <input type="number" id="x1" min="-10" max="10" step="0.1">
+        <label for="y1">Y1:</label>
+        <input type="number" id="y1" min="-10" max="10" step="0.1">
+        <button id="setPoint1">Establecer Punto 1</button>
+    </div>
+    
+    <div>
+        <label for="x2">X2:</label>
+        <input type="number" id="x2" min="-10" max="10" step="0.1">
+        <label for="y2">Y2:</label>
+        <input type="number" id="y2" min="-10" max="10" step="0.1">
+        <button id="setPoint2">Establecer Punto 2</button>
+    </div>
+
+    <div id="coordenadas">
+        <p id="coordenadasPunto1"></p>
+        <p id="coordenadasPunto2"></p>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const resultado = document.getElementById('resultado');
+        const coordPunto1 = document.getElementById('coordenadasPunto1');
+        const coordPunto2 = document.getElementById('coordenadasPunto2');
+        let points = [];
+
+        // Dibujar ejes y numerarlos
+        function drawAxes() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const scale = 25; // Escala para 20 unidades en cada dirección (500/20=25)
+
+            // Dibujar la cuadrícula
+            ctx.strokeStyle = '#e0e0e0';
+            for (let x = 0; x <= width; x += scale) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= height; y += scale) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Dibujar ejes X y Y
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(0, height / 2);
+            ctx.lineTo(width, height / 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(width / 2, 0);
+            ctx.lineTo(width / 2, height);
+            ctx.stroke();
+
+            // Numeración
+            ctx.font = '10px Arial';
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';
+
+            for (let i = 0; i <= width; i += scale) {
+                ctx.fillText(((i / scale) - 10).toFixed(1), i, height / 2 + 15); // Ajuste para centrar de -10 a 10
+                ctx.beginPath();
+                ctx.moveTo(i, height / 2 - 5);
+                ctx.lineTo(i, height / 2 + 5);
+                ctx.stroke();
+            }
+
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= height; i += scale) {
+                if (i !== height / 2) {
+                    ctx.fillText((10 - (i / scale)).toFixed(1), width / 2 - 10, i + 3); // Ajuste para centrar de -10 a 10
+                    ctx.beginPath();
+                    ctx.moveTo(width / 2 - 5, i);
+                    ctx.lineTo(width / 2 + 5, i);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Inicializar el canvas
+        drawAxes();
+
+        // Función para actualizar los campos de entrada (inputs) con las coordenadas de los puntos
+        function updateInputFields(x, y, point) {
+            if (point === 1) {
+                document.getElementById('x1').value = x.toFixed(1);
+                document.getElementById('y1').value = y.toFixed(1);
+            } else if (point === 2) {
+                document.getElementById('x2').value = x.toFixed(1);
+                document.getElementById('y2').value = y.toFixed(1);
+            }
+        }
+
+        // Función para calcular la distancia entre dos puntos
+        function calculateDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+        }
+
+        function addPoint(x, y) {
+            const canvasX = (x * 25) + canvas.width / 2;
+            const canvasY = canvas.height / 2 - (y * 25);
+
+            // Dibujar el punto
+            ctx.beginPath();
+            ctx.arc(canvasX, canvasY, 5, 0, Math.PI * 2, true);
+            ctx.fill();
+
+            // Guardar el punto
+            points.push({ x, y });
+
+            if (points.length === 2) {
+                // Calcular la distancia entre los dos puntos
+                const distancia = calculateDistance(points[0].x, points[0].y, points[1].x, points[1].y);
+
+                // Verificar las propiedades de la distancia
+                const point1 = points[0];
+                const point2 = points[1];
+                const samePoint = point1.x === point2.x && point1.y === point2.y;
+                const positiveDistance = distancia > 0;
+                const symmetricDistance = calculateDistance(point1.x, point1.y, point2.x, point2.y) === calculateDistance(point2.x, point2.y, point1.x, point1.y);
+
+                // Mostrar los resultados
+                resultado.innerText = 'La distancia entre los puntos es: ' + distancia.toFixed(2) + ' unidades';
+                resultado.innerText += '\nLa distancia de un punto a sí mismo es cero: ' + samePoint;
+                resultado.innerText += '\nLa distancia entre dos puntos distintos es siempre positiva: ' + positiveDistance;
+                resultado.innerText += '\nLa distancia de x a y es siempre la misma que la distancia de y a x: ' + symmetricDistance;
+
+                // Dibujar una línea entre los puntos
+                ctx.beginPath();
+                ctx.moveTo((points[0].x * 25) + canvas.width / 2, canvas.height / 2 - (points[0].y * 25));
+                ctx.lineTo((points[1].x * 25) + canvas.width / 2, canvas.height / 2 - (points[1].y * 25));
+                ctx.stroke();
+
+                // Mostrar las coordenadas de los puntos
+                coordPunto1.innerText = 'Coordenadas Punto 1: (' + points[0].x.toFixed(1) + ', ' + points[0].y.toFixed(1) + ')';
+                coordPunto2.innerText = 'Coordenadas Punto 2: (' + points[1].x.toFixed(1) + ', ' + points[1].y.toFixed(1) + ')';
+
+                // Actualizar los campos de entrada (inputs) con las coordenadas de los puntos
+                updateInputFields(points[0].x, points[0].y, 1);
+                updateInputFields(points[1].x, points[1].y, 2);
+
+                // Reiniciar los puntos
+                points = [];
+            } else {
+                // Mostrar las coordenadas del primer punto
+                coordPunto1.innerText = 'Coordenadas Punto 1: (' + points[0].x.toFixed(1) + ', ' + points[0].y.toFixed(1) + ')';
+                coordPunto2.innerText = '';
+                // Actualizar los campos de entrada (inputs) con las coordenadas del primer punto
+                updateInputFields(points[0].x, points[0].y, 1);
+            }
+        }
+
+        canvas.addEventListener('click', (event) => {
+            // Obtener las coordenadas del click en el canvas
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Ajustar las coordenadas para que el origen sea el centro del canvas y escalar
+            const adjustedX = (x - canvas.width / 2) / 25;
+            const adjustedY = (canvas.height / 2 - y) / 25;
+
+            addPoint(adjustedX, adjustedY);
+        });
+
+        document.getElementById('setPoint1').addEventListener('click', () => {
+            const x1 = parseFloat(document.getElementById('x1').value);
+            const y1 = parseFloat(document.getElementById('y1').value);
+            if (!isNaN(x1) && !isNaN(y1)) {
+                addPoint(x1, y1);
+            }
+        });
+
+        document.getElementById('setPoint2').addEventListener('click', () => {
+            const x2 = parseFloat(document.getElementById('x2').value);
+            const y2 = parseFloat(document.getElementById('y2').value);
+            if (!isNaN(x2) && !isNaN(y2)) {
+                addPoint(x2, y2);
+            }
+        });
+    </script>
+</body>
+</html>
